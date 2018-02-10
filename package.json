@@ -1,0 +1,14 @@
+{
+    "name": "webnode",
+    "version": "1.0.0",
+    "description": "Desarrollo de pagina para practicas con Node JS",
+    "main": "servidorexp.js",
+    "dependencies": {
+        "ejs": "^2.5.7",
+        "express": "^4.16.2"
+    },
+    "devDependencies": {},
+    "scripts": {
+        "start": "node servidorexp.js"
+    }
+}
