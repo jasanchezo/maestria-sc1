@@ -1,86 +1,65 @@
 // DEFINICIÓN DE LIBRERIAS DE NODE JS
+// MODULO PATH DE NODE JS
+const pathLib = require('path');
+
+// http://expressjs.com/ 
 const expressLib = require('express');
-const dirLib = require('path');
-const plantilla = require('ejs');
-const parseador = require('body-parser');
+
+// https://www.npmjs.com/package/ejs
+const ejsLib = require('ejs');
+
+// https://www.npmjs.com/package/body-parser 
+const bodyParserLib = require('body-parser');
+
 
 // INSTANCIAMOS EXPRESS
-var app = expressLib();
+var appExpress = expressLib();
 
 // PARÁMETRO DE CONFIGURACIÓN DE BODY-PASER
-var urlencodedParser = parseador.urlencoded({ extended: false });
+var urlencodedParser = bodyParserLib.urlencoded({ extended: false });
 
 // HABILITAMOS BODY-PARSER COMO PARSER JSON
-app.use(parseador.json());
+appExpress.use(bodyParserLib.json());
 
 // PREPARAMOS EL ENTORNO GENERAL
-app.use(expressLib.static('public'));
-app.use(expressLib.static('views'));
-app.set("view engine", "ejs");
+appExpress.use(expressLib.static('public'));
+appExpress.use(expressLib.static('views'));
+appExpress.set("view engine", "ejs");
 
-// RUTEO PARA INDEX
-app.get('/', (req, res) => {
-    // res.send('Hola Mundo!');
+
+appExpress.get('*', (req, res) => {
+    // MOSTRAR INFORMACION DE LA URL EN LA CONSOLA
+    console.log(req.originalUrl);
+
+    // SI EL REQUEST ES LA RAIZ ENTONCES RENDERIZAR LA VISTA INDEX
+    if (req.originalUrl == '/') res.render("page", {ruta: '/index'});
+
+    // ... EN CASO CONTRARIO RENDERIZAR LA LIGA QUE SE SOLICITA EN EL REQUEST
+    res.render("page", {ruta: req.originalUrl});
+    
+    // MOSTRAR INFORMACION EN NAVEGADOR
+    // res.send("POR *: " + req.originalUrl);
+
+    // RESPUESA DE UN ARCHIVO
     // res.sendFile(dirLib.join(__dirname+'/index.html'));
+
+    // RESPUESTA DE UNA VISTA/PLANTILLA CON EJS
     // res.sendFile(dirLib.join(__dirname+'../views/index.ejs'));
-
-    console.log(req.originalUrl);
-
-    res.render("index");
 });
 
-// RUTEO PARA SERVICE
-app.get('/service', (req, res) => {
-    console.log(req.originalUrl);
-    res.render("service");
-});
 
-// RUTEO PARA TEAM
-app.get('/team', (req, res) => {
-    console.log(req.originalUrl);
-    res.render("team");
-});
-
-// RUTEO PARA SKILLS
-app.get('/skills', (req, res) => {
-    console.log(req.originalUrl);
-    res.render("skills");
-});
-
-// RUTEO PARA PORTFOLIO
-app.get('/portfolio', (req, res) => {
-    console.log(req.originalUrl);
-    res.render("portfolio");
-});
-
-// RUTEO PARA PRICE
-app.get('/price', (req, res) => {
-    console.log(req.originalUrl);
-    res.render("price");
-});
-
-// RUTEO PARA CONTACT
-app.get('/contact', (req, res) => {
-    console.log(req.originalUrl);
-    res.render("contact");
-});
-
-// POST /login gets urlencoded bodies
-app.post('/contact', urlencodedParser, function (req, res) {
+// POST /login gets urlencoded bodies MÉTODO PARA EL COMANDO POST EN LA RUTA /contact USANDO EL PARSER DE 
+appExpress.post('/contact', urlencodedParser, function (req, res) {
+    // SI NO SE RECIBE EL CONTENIDO CORRECTO DE BODY ENTONCES SE REGRESA (return) UN ESTATUS DE NOT FOUND (400) EN EL PROTOCOLO DE HTTP
     if (!req.body) return res.sendStatus(400);
+
+    // EN CASO DE ENCONTRARSE CONTENIDO DE BODY SE CONTINUA CON LA EJECUCIÓN, MOSTRANDO LOS DATOS DEL FORM PARSEADOS
     console.log(req.body.name + " " + req.body.email + " " + req.body.phone + " " + req.body.website + " " + req.body.message);
+    
     // MOSTRAR SOLO EL DATO CAPTURADO
     res.send('welcome, ' + req.body.name + " " + req.body.email + " " + req.body.phone + " " + req.body.website + " " + req.body.message);
     // res.render("contact");
   });
 
-// POSICIONAMOS EL SERVICIO EN EL PUERTO 3000/TCP
-app.listen(3000, () => console.log('Ejemplo app listening on port 3000'));
-
-/*
-FORMA DE RECIBIR CUALQUIER DATO EN EL REQUEST
-app.get('*', (req, res) => {
-    console.log(req.originalUrl);
-    res.render("contact");
-});
-*/
+// POSICIONAMOS EL SERVICIO EN EL PUERTO 3000/TCP Y MOSTRAMOS UN MENSAJE DE SALIDA PARA MONITOREAR EL LANZAMIENTO DEL SERVICIO
+appExpress.listen(3000, () => console.log('Ejemplo app listening on port 3000'));
