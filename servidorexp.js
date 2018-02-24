@@ -11,6 +11,14 @@ const ejsLib = require('ejs');
 // https://www.npmjs.com/package/body-parser 
 const bodyParserLib = require('body-parser');
 
+// https://www.npmjs.com/package/multer#readme
+var multerLib = require('multer');
+
+// LIBRERIA DE fs de NODEJS
+const fsLib = require('fs');
+
+
+
 
 // INSTANCIAMOS EXPRESS
 var appExpress = expressLib();
@@ -27,12 +35,14 @@ appExpress.use(expressLib.static('views'));
 appExpress.set("view engine", "ejs");
 
 
+// http://www.embeddedjs.com/
+// https://www.codementor.io/naeemshaikh27/node-with-express-and-ejs-du107lnk6 
 appExpress.get('*', (req, res) => {
     // MOSTRAR INFORMACION DE LA URL EN LA CONSOLA
     console.log(req.originalUrl);
 
     // SI EL REQUEST ES LA RAIZ ENTONCES RENDERIZAR LA VISTA INDEX
-    if (req.originalUrl == '/') res.render("page", {ruta: '/index'});
+    if (req.originalUrl == '/') return res.render("page", {ruta: '/index'});
 
     // ... EN CASO CONTRARIO RENDERIZAR LA LIGA QUE SE SOLICITA EN EL REQUEST
     res.render("page", {ruta: req.originalUrl});
@@ -47,19 +57,59 @@ appExpress.get('*', (req, res) => {
     // res.sendFile(dirLib.join(__dirname+'../views/index.ejs'));
 });
 
+uploadsPath = "./uploads";
+separator = "|||";
 
-// POST /login gets urlencoded bodies MÉTODO PARA EL COMANDO POST EN LA RUTA /contact USANDO EL PARSER DE 
-appExpress.post('/contact', urlencodedParser, function (req, res) {
-    // SI NO SE RECIBE EL CONTENIDO CORRECTO DE BODY ENTONCES SE REGRESA (return) UN ESTATUS DE NOT FOUND (400) EN EL PROTOCOLO DE HTTP
-    if (!req.body) return res.sendStatus(400);
+// FUNCION DE SUBIDA DE ARCHIVOS
+// OPCIONES PARA MEJORAR FILTRADO: https://scotch.io/tutorials/express-file-uploads-with-multer 
+// ARTICULO CON EJEMPLO CLARO DE CONFIGURACION DE ALMACENAMIENTO: https://www.ibm.com/developerworks/community/blogs/a509d54d-d354-451f-a0dd-89a2e717c10b/entry/How_to_upload_a_file_using_Node_js_Express_and_Multer?lang=en 
+// EJEMPLO EN ESPAÑOL: http://www.tutorialesprogramacionya.com/javascriptya/nodejsya/detalleconcepto.php?codigo=24&punto=24&inicio=15 
+var myStorage = multerLib.diskStorage({
+    destination: function(req, file, callback) {
+        callback(null, uploadsPath);
+    },
+    filename: function(req, file, callback) {
+        // LE AGREGAMOS UN TIMESTAMP AL ARCHIVO PARA QUE NO SE SOBREESCRIBA AUN CON EL MISMO NOMBRE
+        localStorageFileName = Date.now() + file.originalname;
 
-    // EN CASO DE ENCONTRARSE CONTENIDO DE BODY SE CONTINUA CON LA EJECUCIÓN, MOSTRANDO LOS DATOS DEL FORM PARSEADOS
-    console.log(req.body.name + " " + req.body.email + " " + req.body.phone + " " + req.body.website + " " + req.body.message);
-    
-    // MOSTRAR SOLO EL DATO CAPTURADO
-    res.send('welcome, ' + req.body.name + " " + req.body.email + " " + req.body.phone + " " + req.body.website + " " + req.body.message);
-    // res.render("contact");
-  });
+        console.log(localStorageFileName);
+        console.log(req.body);
+        console.log(req.body.name);
+        
+        // REGISTRAMOS LA INFORMACIÓN DEL form EN EL ARCHIVO DE INDICE
+        // http://stackabuse.com/writing-to-files-in-node-js/
+        fsLib.appendFile(uploadsPath + "/index.txt", req.body.name + separator + 
+                                                req.body.email + separator + 
+                                                req.body.phone + separator + 
+                                                req.body.website + separator + 
+                                                req.body.message + separator + 
+                                                localStorageFileName +  "\n", (err) => {  
+            // EN CASO DE ERROR EN LA ESCRITURA CACHAMOS EL EVENTO Y SALE DE EJECUCION DE MANERA CONTROLADA
+            if (err) throw err;
+        
+            // IMPRESION EN CONSOLA EN CASO DE EXITO DE ESCRITURA
+            console.log("Archivo registrado");
+        });
+
+        // GUARDAMOS LA IMAGEN CON EL NOMBRE CONSTRUIDO
+        callback(null, localStorageFileName);
+    }
+});
+
+// CONFIGURAMOS MULTER PARA UN upload SIMPLE CON LA CONFIGURACION DE ALMACENAMIENTO DE storage Y ESPERANDO EL ARCHIVO DEL form DEL ELEMENTO file CON EL ATRIBUTO name IGUAL A myimage
+var uploadFunc = multerLib({storage: myStorage}).single('myimage');
+
+// RUTEO PARA RECIBIR EL COMANDO post CON LA RUTA /contact Y LO RECIBIMOS CON LA FUNCION DE multer
+appExpress.post('/contact', function(req, res) {
+    // SUBIMOS EL ARCHIVO, EN CASO DE ERROR DESPLEGAMOS MENSAJE
+    uploadFunc(req, res, function(err) {
+        if (err) return res.send("ERROR cargando archivo");
+        
+        // EN CASO DE EXITO IMPRIMIMOS EN PANTALLA MENSAJE
+        res.send("Archivo cargado");
+    });
+});
+
 
 // POSICIONAMOS EL SERVICIO EN EL PUERTO 3000/TCP Y MOSTRAMOS UN MENSAJE DE SALIDA PARA MONITOREAR EL LANZAMIENTO DEL SERVICIO
 appExpress.listen(3000, () => console.log('Ejemplo app listening on port 3000'));
