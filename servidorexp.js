@@ -17,6 +17,12 @@ var multerLib = require('multer');
 // LIBRERIA DE fs de NODEJS
 const fsLib = require('fs');
 
+// LIBRERIA DE fs-extra DE NODEJS PARA FUNCIONES SIMPLIFICADA DE file system
+// https://www.npmjs.com/package/fs-extra
+const fsExtraLib = require('fs-extra');
+
+
+
 
 
 
@@ -39,7 +45,7 @@ appExpress.set("view engine", "ejs");
 // https://www.codementor.io/naeemshaikh27/node-with-express-and-ejs-du107lnk6 
 appExpress.get('*', (req, res) => {
     // MOSTRAR INFORMACION DE LA URL EN LA CONSOLA
-    console.log(req.originalUrl);
+    // console.log(req.originalUrl);
 
     // SI EL REQUEST ES LA RAIZ ENTONCES RENDERIZAR LA VISTA INDEX
     if (req.originalUrl == '/') return res.render("page", {ruta: '/index'});
@@ -59,6 +65,8 @@ appExpress.get('*', (req, res) => {
 
 uploadsPath = "./uploads";
 separator = "|||";
+dataForm = {};
+localStorageFileName = "";
 
 // FUNCION DE SUBIDA DE ARCHIVOS
 // OPCIONES PARA MEJORAR FILTRADO: https://scotch.io/tutorials/express-file-uploads-with-multer 
@@ -71,10 +79,9 @@ var myStorage = multerLib.diskStorage({
     filename: function(req, file, callback) {
         // LE AGREGAMOS UN TIMESTAMP AL ARCHIVO PARA QUE NO SE SOBREESCRIBA AUN CON EL MISMO NOMBRE
         localStorageFileName = Date.now() + file.originalname;
-
-        console.log(localStorageFileName);
-        console.log(req.body);
-        console.log(req.body.name);
+        
+        // CONSTRUCCION DEL ARREGLO dataForm PARA ENVIAR A LA VISTA lista
+        dataForm = {name : req.body.name, email : req.body.email, phone : req.body.phone, website : req.body.website, message : req.body.message, myimage : localStorageFileName};
         
         // REGISTRAMOS LA INFORMACIÓN DEL form EN EL ARCHIVO DE INDICE
         // http://stackabuse.com/writing-to-files-in-node-js/
@@ -88,7 +95,7 @@ var myStorage = multerLib.diskStorage({
             if (err) throw err;
         
             // IMPRESION EN CONSOLA EN CASO DE EXITO DE ESCRITURA
-            console.log("Archivo registrado");
+            // console.log("Archivo registrado");
         });
 
         // GUARDAMOS LA IMAGEN CON EL NOMBRE CONSTRUIDO
@@ -106,7 +113,18 @@ appExpress.post('/contact', function(req, res) {
         if (err) return res.send("ERROR cargando archivo");
         
         // EN CASO DE EXITO IMPRIMIMOS EN PANTALLA MENSAJE
-        res.send("Archivo cargado");
+        // res.send("Archivo cargado");
+
+        // CODIGO PARA MOVER UN ARCHIVO DE LA RUTA TEMPORAL A LA DEFINITIVA
+        // https://stackoverflow.com/questions/3133243/how-do-i-get-the-path-to-the-current-script-with-node-js
+        fsExtraLib.move(process.cwd() + "/uploads/" + localStorageFileName, process.cwd() + "/public/files/" + localStorageFileName, err => {
+            if (err) return console.error(err);
+        
+            // console.log('Archivo movido a ruta definitiva');
+        });
+
+        // ENVIAR A LA VISTA lista ENVIANDO UN ARREGLO DE DATOS dataForm
+        res.render('lista', dataForm);
     });
 });
 
