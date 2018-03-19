@@ -21,6 +21,11 @@ const fsLib = require('fs');
 // https://www.npmjs.com/package/fs-extra
 const fsExtraLib = require('fs-extra');
 
+// IMPORTAR NUESTRO PROPIO OBJETO DE CONEXIÓN A MYSQL
+const myMySQLLib = require('./Library/MySQLClass');
+
+// https://zellwk.com/blog/crud-express-mongodb/
+const mongoLib = require('mongodb').MongoClient
 
 
 
@@ -41,15 +46,26 @@ appExpress.use(expressLib.static('views'));
 appExpress.set("view engine", "ejs");
 
 
+
+appExpress.delete("/delete/:id", function(req, res) {
+    console.log("eliminar ");
+    res.redirect("/contact");
+});
+
+
 // http://www.embeddedjs.com/
 // https://www.codementor.io/naeemshaikh27/node-with-express-and-ejs-du107lnk6 
 appExpress.get('*', (req, res) => {
     // MOSTRAR INFORMACION DE LA URL EN LA CONSOLA
-    // console.log(req.originalUrl);
+    console.log(req.originalUrl);
 
     // SI EL REQUEST ES LA RAIZ ENTONCES RENDERIZAR LA VISTA INDEX
     if (req.originalUrl == '/') return res.render("page", {ruta: '/index'});
 
+    if (req.originalUrl == '/contact/delete/:id')
+        console.log("SI PASO POR AQUI");
+    req.pa
+    
     // ... EN CASO CONTRARIO RENDERIZAR LA LIGA QUE SE SOLICITA EN EL REQUEST
     res.render("page", {ruta: req.originalUrl});
     
@@ -62,6 +78,8 @@ appExpress.get('*', (req, res) => {
     // RESPUESTA DE UNA VISTA/PLANTILLA CON EJS
     // res.sendFile(dirLib.join(__dirname+'../views/index.ejs'));
 });
+
+
 
 uploadsPath = "./uploads";
 separator = "|||";
@@ -93,9 +111,6 @@ var myStorage = multerLib.diskStorage({
                                                 localStorageFileName +  "\n", (err) => {  
             // EN CASO DE ERROR EN LA ESCRITURA CACHAMOS EL EVENTO Y SALE DE EJECUCION DE MANERA CONTROLADA
             if (err) throw err;
-        
-            // IMPRESION EN CONSOLA EN CASO DE EXITO DE ESCRITURA
-            // console.log("Archivo registrado");
         });
 
         // GUARDAMOS LA IMAGEN CON EL NOMBRE CONSTRUIDO
@@ -112,19 +127,45 @@ appExpress.post('/contact', function(req, res) {
     uploadFunc(req, res, function(err) {
         if (err) return res.send("ERROR cargando archivo");
         
-        // EN CASO DE EXITO IMPRIMIMOS EN PANTALLA MENSAJE
+        // EN CASO DE EXITO SE PODRÍA IMPRIMIR EN PANTALLA MENSAJE
         // res.send("Archivo cargado");
 
         // CODIGO PARA MOVER UN ARCHIVO DE LA RUTA TEMPORAL A LA DEFINITIVA
         // https://stackoverflow.com/questions/3133243/how-do-i-get-the-path-to-the-current-script-with-node-js
         fsExtraLib.move(process.cwd() + "/uploads/" + localStorageFileName, process.cwd() + "/public/files/" + localStorageFileName, err => {
             if (err) return console.error(err);
-        
-            // console.log('Archivo movido a ruta definitiva');
         });
 
-        // ENVIAR A LA VISTA lista ENVIANDO UN ARREGLO DE DATOS dataForm
-        res.render('lista', dataForm);
+        // INSERTAMOS LOS DATOS EN LA DB DE MYSQL
+        myMySQLLib.query('INSERT INTO Contactos SET ?', dataForm, function (error, results, fields) {
+            if (error) throw error;
+        });
+
+        // CÓDIGO PARA CONEXIÓN CON HOST CON MONGODB
+        mongoLib.connect('mongodb://localhost:27017', (err, client) => {
+            // CONEXIÓN CON LA BASE DE DATOS NOSQL
+            const db = client.db('db_MasterSC');
+
+            // OPERACIÓN DE INSERTAR CON LA COLECCIÓN Contactos
+            db.collection('Contactos').save(req.body, (err, result) => {
+                if (err) return console.log(err);
+            });
+            
+            // CIERRE DE LA CONEXIÓN CON EL HOST DE MONGODB
+            client.close();
+        })
+
+        // OBTENEMOS EL LISTADO DE Contactos PARA ENVIARLO A LA VISTA DE CONTACTOS
+        myMySQLLib.query('SELECT * FROM Contactos', function (error, RowDataPackets, fields) {
+            if (error) throw error;
+
+            // ENVIAR A LA VISTA lista ENVIANDO UN ARREGLO DE DATOS RowDataPackets
+            // res.render('lista', RowDataPackets);
+            res.render('lista', { RowDataPackets: RowDataPackets });
+        });
+
+        // FINALIZAR CONEXIÓN CON MYSQL
+        myMySQLLib.end();
     });
 });
 

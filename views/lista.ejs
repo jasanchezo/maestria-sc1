@@ -11,33 +11,43 @@
     <title>Imagen Cargada</title>
   </head>
   <body>
-    <table class="table table-responsive table-bordered table-striped table-hover">
-        <thead class="thead-dark">
+    
+    <div class="container">
+        <table class="table">
+            <thead class="thead">
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Phone</th>
+                    <th scope="col">Website</th>
+                    <th scope="col">Message</th>
+                    <th scope="col">myimage</th>
+                    <th scope="col">Acciones</th>
+                </tr>
+            </thead>
+
+            <% RowDataPackets.forEach(function(RowDataPacket, index) { %>
             <tr>
-                <th scope="col">name</th>
-                <th scope="col">Email</th>
-                <th scope="col">Phone</th>
-                <th scope="col">Website</th>
-                <th scope="col">Message</th>
-                <th scope="col">myimage</th>
+                <td class="table-active"><%=RowDataPacket.name %></td>
+                <td class="table-primary"><%=RowDataPacket.email %></td>
+                <td class="table-secondary"><%=RowDataPacket.phone %></td>
+                <td class="table-success"><%=RowDataPacket.website %></td>
+                <td class="table-danger"><%=RowDataPacket.message %></td>
+                <td class="table-warning"><img class="img-fluid" src="/files/<%=RowDataPacket.myimage %>"/></td>
+                <td class="table-active"><a href="/contact/delete/<%=RowDataPacket.email %>">Eliminar</a></td>
             </tr>
-        </thead>
-        <tr>
-            <td><%=name %></td>
-            <td><%=email %></td>
-            <td><%=phone %></td>
-            <td><%=website %></td>
-            <td><%=message %></td>
-            <td><img src="/files/<%=myimage %>"/></td>
-        </tr>
-    </table>
+            <% }); %>
+        </table>
+    </div>
+    
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-  </body>
+
+</body>
 </html>
 
 
