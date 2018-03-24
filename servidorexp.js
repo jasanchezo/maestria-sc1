@@ -47,10 +47,6 @@ appExpress.set("view engine", "ejs");
 
 
 
-appExpress.delete("/delete/:id", function(req, res) {
-    console.log("eliminar ");
-    res.redirect("/contact");
-});
 
 
 // http://www.embeddedjs.com/
@@ -60,23 +56,58 @@ appExpress.get('*', (req, res) => {
     console.log(req.originalUrl);
 
     // SI EL REQUEST ES LA RAIZ ENTONCES RENDERIZAR LA VISTA INDEX
-    if (req.originalUrl == '/') return res.render("page", {ruta: '/index'});
+    if (req.originalUrl == '/') {
+        return res.render("page", {ruta: '/index'});
 
-    if (req.originalUrl == '/contact/delete/:id')
-        console.log("SI PASO POR AQUI");
-    req.pa
-    
-    // ... EN CASO CONTRARIO RENDERIZAR LA LIGA QUE SE SOLICITA EN EL REQUEST
-    res.render("page", {ruta: req.originalUrl});
-    
-    // MOSTRAR INFORMACION EN NAVEGADOR
-    // res.send("POR *: " + req.originalUrl);
+    // SE RECORTARÁ EL CARACTER 16 EN ADELANTE PARA OBTENER EL DATO DEL REGISTRO A ELIMINAR: '/contact/delete/6'
+    } else if (req.originalUrl.substring(0, 16) == "/contact/delete/") {
+        myMySQLLib.query("DELETE FROM db_MasterSC.Contactos WHERE email LIKE ? LIMIT 1;", [ req.originalUrl.substring(16) ], function (error, results, fields) {
+            if (error) throw error;
+            console.log("REGISTRO ELIMINADO: " + req.originalUrl.substring(16));
+        });
 
-    // RESPUESA DE UN ARCHIVO
-    // res.sendFile(dirLib.join(__dirname+'/index.html'));
+        // CÓDIGO PARA CONEXIÓN CON HOST CON MONGODB
+        mongoLib.connect('mongodb://localhost:27017', (err, client) => {
+            // CONEXIÓN CON LA BASE DE DATOS NOSQL
+            const db = client.db('db_MasterSC');
 
-    // RESPUESTA DE UNA VISTA/PLANTILLA CON EJS
-    // res.sendFile(dirLib.join(__dirname+'../views/index.ejs'));
+            // OPERACIÓN DE INSERTAR CON LA COLECCIÓN Contactos
+            // db.collection('Contactos').save(req.body, (err, result) => {
+            db.collection('Contactos').deleteOne({ 'email' : req.originalUrl.substring(16) }, function (err, result) {
+                if (err) return console.log(err);
+                console.log("BORRADO DE MONGO: " + req.originalUrl.substring(16));
+            });
+            
+            // CIERRE DE LA CONEXIÓN CON EL HOST DE MONGODB
+            client.close();
+        });
+
+        // OBTENEMOS EL LISTADO DE Contactos PARA ENVIARLO A LA VISTA DE CONTACTOS
+        myMySQLLib.query('SELECT * FROM Contactos ORDER BY name', function (error, RowDataPackets, fields) {
+            if (error) {
+                myMySQLLib.on('error', function(err) {
+                    console.log("[mysql error]",err);
+                });
+            }
+
+            // ENVIAR A LA VISTA lista ENVIANDO UN ARREGLO DE DATOS RowDataPackets
+            // res.render('lista', RowDataPackets);
+            return res.render('lista', { RowDataPackets: RowDataPackets });
+            ////return res.render("page", {ruta: '/index'});
+        });
+    } else {
+        // ... EN CASO CONTRARIO RENDERIZAR LA LIGA QUE SE SOLICITA EN EL REQUEST
+        res.render("page", {ruta: req.originalUrl});
+        
+        // MOSTRAR INFORMACION EN NAVEGADOR
+        // res.send("POR *: " + req.originalUrl);
+
+        // RESPUESA DE UN ARCHIVO
+        // res.sendFile(dirLib.join(__dirname+'/index.html'));
+
+        // RESPUESTA DE UNA VISTA/PLANTILLA CON EJS
+        // res.sendFile(dirLib.join(__dirname+'../views/index.ejs'));
+    }
 });
 
 
@@ -153,10 +184,10 @@ appExpress.post('/contact', function(req, res) {
             
             // CIERRE DE LA CONEXIÓN CON EL HOST DE MONGODB
             client.close();
-        })
+        });
 
         // OBTENEMOS EL LISTADO DE Contactos PARA ENVIARLO A LA VISTA DE CONTACTOS
-        myMySQLLib.query('SELECT * FROM Contactos', function (error, RowDataPackets, fields) {
+        myMySQLLib.query('SELECT * FROM Contactos ORDER BY name', function (error, RowDataPackets, fields) {
             if (error) throw error;
 
             // ENVIAR A LA VISTA lista ENVIANDO UN ARREGLO DE DATOS RowDataPackets
@@ -165,7 +196,7 @@ appExpress.post('/contact', function(req, res) {
         });
 
         // FINALIZAR CONEXIÓN CON MYSQL
-        myMySQLLib.end();
+        // myMySQLLib.end();
     });
 });
 
