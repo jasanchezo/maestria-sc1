@@ -27,6 +27,14 @@ const myMySQLLib = require('./Library/MySQLClass');
 // https://zellwk.com/blog/crud-express-mongodb/
 const mongoLib = require('mongodb').MongoClient
 
+// LIBRERIA PARA RECIBIR PAGOS https://github.com/conekta/conekta-node
+const conektaLib = require('conekta');
+
+// LLAVE PUBLICA https://admin.conekta.com/settings/keys
+conektaLib.api_key = 'key_JpRn8ax6roqqEGRLrsKSVg';
+conektaLib.locale = 'es';
+
+conektaLib.api_version = '2.0.0';
 
 
 
@@ -184,6 +192,32 @@ appExpress.post('/contact', function(req, res) {
             
             // CIERRE DE LA CONEXIÓN CON EL HOST DE MONGODB
             client.close();
+        });
+
+
+        // CÓDIGO PARA HACER UNA PRUEBA DE TRANSACCIÓN DE PAGO POR Conekta
+        // EL CAMPO DE MONTO ES CON CENTAVOS
+        conektaLib.Order.create({
+            "currency": "MXN",
+            "customer_info": {
+                "name": req.body.name,
+                "phone": req.body.phone,
+                "email": req.body.email
+            },
+            "line_items": [{
+                "name": "Box of Cohiba S1s",
+                "description": "Imported From Mex.",
+                "unit_price": req.body.monto,
+                "quantity": 1,
+                "tags": ["food", "mexican food"],
+                "type": "physical"
+            }]
+          }, function(err, res) {
+            if (err) {
+                console.log(err.type);
+                return;
+            }
+            console.log(res.toObject());
         });
 
         // OBTENEMOS EL LISTADO DE Contactos PARA ENVIARLO A LA VISTA DE CONTACTOS
