@@ -31,7 +31,7 @@ const mongoLib = require('mongodb').MongoClient
 const conektaLib = require('conekta');
 
 // LLAVE PUBLICA https://admin.conekta.com/settings/keys
-conektaLib.api_key = 'key_JpRn8ax6roqqEGRLrsKSVg';
+conektaLib.api_key = 'key_J-------------';
 conektaLib.locale = 'es';
 
 conektaLib.api_version = '2.0.0';
